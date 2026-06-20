@@ -1,14 +1,14 @@
 import SwiftUI
 
-/// Bootstrap Hello World screen.
-/// Replaced in future feature stories when the MVVM + Coordinator
-/// architecture (AppCoordinator → LoginCoordinator / TabBarCoordinator) lands.
+/// Root content view — presents `LoginView` as the first screen on launch.
+///
+/// The `onSignIn` closure is a no-op stub until the Okta authentication
+/// story wires up the real `DirectAuthenticationFlow`. At that point this
+/// view will be replaced by the `AppCoordinator`-driven root that routes
+/// between the Login flow and the authenticated tab-bar.
 struct ContentView: View {
     var body: some View {
-        Text("AcmeBank")
-            .font(.largeTitle)
-            .fontWeight(.bold)
-            .multilineTextAlignment(.center)
+        LoginView(onSignIn: { _, _ in })
     }
 }
 
