@@ -13,7 +13,7 @@ features are added via subsequent Jira stories.
 | Language | Swift 5.10 |
 | UI Framework | SwiftUI |
 | Architecture | MVVM + Coordinator (SwiftUI `NavigationStack`) |
-| Auth | Okta OIDC (`okta-mobile-swift` 2.x) |
+| Auth | Okta OIDC (`okta-mobile-swift` 2.x, `OktaDirectAuth` product only) |
 | Networking | `URLSession` + async/await |
 | DI | Constructor injection; no service locator |
 | Notifications | `NotificationCenter` (typed wrappers) |
@@ -45,17 +45,24 @@ xcodebuild test -scheme AcmeBank \
 ```
 AcmeBank/
 ├── App/              # @main entry, RootView, AppCoordinator (deferred)
-├── Core/             # Auth, Networking, Notifications, Extensions (deferred)
+├── Auth/             # OktaConfig (build-time Info.plist loader); AuthService etc. deferred
+├── Core/             # Networking, Notifications, Extensions (deferred)
 ├── Domain/           # Models + Repository protocols (deferred)
 ├── Data/             # Remote + Mock repository implementations (deferred)
 ├── Features/         # Login, Home, Accounts, Transfer, Cards (deferred)
 ├── DesignSystem/     # Colors, Typography (deferred)
+├── Info.plist        # Holds the four Okta* keys (build script writes real values)
 └── Resources/        # Assets.xcassets, PrivacyInfo.xcprivacy
 AcmeBankTests/        # XCTest unit tests
 AcmeBankUITests/      # XCUITest critical-flow tests (deferred)
+Scripts/              # Build-time scripts; inject-okta-config.sh wires env → Info.plist
 project.yml           # XcodeGen spec — source of truth for .xcodeproj
 setup.sh              # one-shot materialise script
 ```
+
+Okta build-time configuration (`OKTA_ISSUER`, `OKTA_CLIENT_ID`,
+`OKTA_REDIRECT_URI`, `OKTA_SCOPES` → `AcmeBank/Auth/OktaConfig.swift`) is
+documented in [README.md → "Okta build configuration"](README.md#okta-build-configuration).
 
 ## Planned Architecture (from spec)
 
@@ -71,7 +78,9 @@ setup.sh              # one-shot materialise script
 ### Deferred — future PRs
 - **MVVM + Coordinator** — `AppCoordinator`, `RootView`, `LoginCoordinator`,
   `TabBarCoordinator`, `HomeCoordinator`, etc. *(deferred)*
-- **Okta OIDC auth** — `AuthService`, `KeychainStore`, `UserSession`, `Okta.plist` *(deferred)*
+- **Okta OIDC auth** — `AuthService`, `KeychainStore`, `UserSession` (Okta tenant
+  config already wired via `AcmeBank/Auth/OktaConfig.swift` + build-time
+  `Scripts/inject-okta-config.sh`) *(deferred)*
 - **Networking layer** — `APIClient`, `APIRouter`, `APIError`, `RequestInterceptor` *(deferred)*
 - **Domain models** — `Account`, `Transaction`, `Customer`, `TransferRequest` *(deferred)*
 - **Repository protocols** — `AccountRepositoryProtocol` etc. in `Domain/Repositories/` *(deferred)*
