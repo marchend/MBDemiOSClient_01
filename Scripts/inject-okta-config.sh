@@ -21,19 +21,30 @@
 # returns `.notConfigured(reason:)` so the app boots in a safe mock
 # auth mode instead of crashing or pointing at a bogus tenant.
 #
-# This script is intentionally `exit 0` on every path: a missing env
-# var is NOT a build failure (devs cloning the repo for the first time
-# must be able to build immediately). It IS a runtime "not configured"
-# state.
+# This script's "no Info.plist found" path is intentionally `exit 0`:
+# a missing env var (or a target that hasn't produced an Info.plist
+# yet) is NOT a build failure (devs cloning the repo for the first
+# time must be able to build immediately). It IS a runtime "not
+# configured" state.
 
-set -u
-
-PLIST="${BUILT_PRODUCTS_DIR}/${INFOPLIST_PATH}"
+# Default the two Xcode-provided variables we care about so the guard
+# below works whether or not they're set. We deliberately do NOT enable
+# `set -u` yet — we want the "Info.plist not produced" path to be a
+# clean exit 0 even in unusual build configurations.
+PLIST="${BUILT_PRODUCTS_DIR:-}/${INFOPLIST_PATH:-}"
 
 if [ ! -f "$PLIST" ]; then
   echo "warning: inject-okta-config.sh: Info.plist not found at $PLIST; skipping"
   exit 0
 fi
+
+# From here on, treat the script as a real production script: fail
+# fast on unset variables, command errors, and broken pipes. This is
+# the hardening called out in code review — without `set -e`, a
+# `plutil -replace` failure (e.g. malformed plist, read-only file)
+# would be silently swallowed and the build would appear green while
+# the Info.plist was actually missing the Okta keys at runtime.
+set -euo pipefail
 
 inject() {
   # $1 = env var name, $2 = Info.plist key

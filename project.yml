@@ -42,7 +42,15 @@ targets:
       # Missing env vars are written as `__OKTA_..._UNSET__` sentinels
       # and detected at runtime by `OktaConfig.load()`; the build never
       # fails just because a dev hasn't set the vars yet.
-      - script: "\"$SRCROOT/Scripts/inject-okta-config.sh\""
+      #
+      # NOTE: We invoke the script via an explicit `/bin/bash` rather
+      # than executing it directly. Files added through the agent
+      # tooling land with mode 0644 (not 0755), so a direct
+      # `"$SRCROOT/Scripts/inject-okta-config.sh"` invocation fails
+      # under xcodebuild's PhaseScriptExecution with "Permission
+      # denied". Passing the script as an argument to bash sidesteps
+      # the executable bit requirement entirely.
+      - script: "/bin/bash \"$SRCROOT/Scripts/inject-okta-config.sh\""
         name: Inject Okta Config
         basedOnDependencyAnalysis: false
   AcmeBankTests:
