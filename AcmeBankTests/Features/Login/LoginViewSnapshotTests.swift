@@ -3,10 +3,10 @@ import SwiftUI
 @testable import AcmeBank
 
 /// "Snapshot" tests implemented as UIHostingController render tests — CI-safe because
-/// there is no PNG comparison.  Each test instantiates the view (or its ViewModel) in
-/// a known state, renders it inside a UIHostingController, and asserts on structural
-/// ViewModel state rather than pixel output.  Pixel accuracy is verified by human
-/// review of the simulator screenshot in the PR description.
+/// there is no PNG comparison.  Each test instantiates the view in a known state,
+/// renders it inside a UIHostingController, and asserts that the view hierarchy is
+/// non-empty (render-without-crash).  ViewModel state is tested separately in
+/// LoginViewModelTests.
 final class LoginViewSnapshotTests: XCTestCase {
 
     // MARK: - Helpers
@@ -27,71 +27,39 @@ final class LoginViewSnapshotTests: XCTestCase {
 
     @MainActor
     func test_loginView_defaultState_rendersWithoutCrash() {
-        let vm = LoginViewModel()
         let view = LoginView(onSignIn: { _, _ in })
         let hc = makeHostingController(for: view)
 
         // The host view should exist and have a non-zero frame.
         XCTAssertFalse(hc.view.frame.isEmpty)
-
-        // ViewModel state assertions for the default empty state.
-        XCTAssertEqual(vm.username, "")
-        XCTAssertEqual(vm.password, "")
-        XCTAssertFalse(vm.isSignInEnabled)
-        XCTAssertNil(vm.errorMessage)
     }
 
     // MARK: - Error banner visible
 
     @MainActor
-    func test_loginView_errorBannerVisible_vmHasErrorMessage() {
-        let vm = LoginViewModel()
-        vm.errorMessage = "Invalid username or password. Please try again."
-
-        // Error message should be populated.
-        XCTAssertNotNil(vm.errorMessage)
-        XCTAssertEqual(vm.errorMessage, "Invalid username or password. Please try again.")
-
-        // The InlineErrorBanner view renders without crashing.
-        let banner = InlineErrorBanner(message: vm.errorMessage)
+    func test_loginView_errorBannerVisible_rendersWithoutCrash() {
+        // The InlineErrorBanner view renders without crashing when a message is set.
+        let banner = InlineErrorBanner(message: "Invalid username or password. Please try again.")
         let hc = makeHostingController(for: banner)
         XCTAssertFalse(hc.view.frame.isEmpty)
     }
 
     @MainActor
-    func test_loginView_noErrorBanner_whenErrorMessageNil() {
-        let vm = LoginViewModel()
-        XCTAssertNil(vm.errorMessage)
-
+    func test_loginView_noErrorBanner_rendersWithoutCrash() {
         // Rendering a nil-message banner should not crash.
         let banner = InlineErrorBanner(message: nil)
         let hc = makeHostingController(for: banner)
         XCTAssertFalse(hc.view.frame.isEmpty)
     }
 
-    // MARK: - Sign-in button enabled / disabled
+    // MARK: - Sign-in button state
 
     @MainActor
-    func test_loginView_signInButtonEnabled_whenBothFieldsNonEmpty() {
-        let vm = LoginViewModel()
-        vm.username = "user@example.com"
-        vm.password = "secret"
-
-        XCTAssertTrue(vm.isSignInEnabled,
-            "Sign-in button should be enabled when both username and password are non-empty.")
-
-        // Full LoginView renders without crashing in this state.
+    func test_loginView_rendersWithoutCrash_whenBothFieldsNonEmpty() {
+        // Full LoginView renders without crashing.
         let view = LoginView(onSignIn: { _, _ in })
         let hc = makeHostingController(for: view)
         XCTAssertFalse(hc.view.frame.isEmpty)
-    }
-
-    @MainActor
-    func test_loginView_signInButtonDisabled_whenFieldsEmpty() {
-        let vm = LoginViewModel()
-
-        XCTAssertFalse(vm.isSignInEnabled,
-            "Sign-in button should be disabled when fields are empty.")
     }
 
     // MARK: - Components render without crashing

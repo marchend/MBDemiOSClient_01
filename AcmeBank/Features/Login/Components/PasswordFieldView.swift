@@ -9,15 +9,16 @@ struct PasswordFieldView: View {
     var body: some View {
         HStack(spacing: 0) {
             ZStack {
-                // Secure (masked) field
-                SecureField(placeholder, text: $text)
-                    .opacity(isVisible ? 0 : 1)
-                    .accessibilityHidden(isVisible)
-
-                // Plain (revealed) field
-                TextField(placeholder, text: $text)
-                    .opacity(isVisible ? 1 : 0)
-                    .accessibilityHidden(!isVisible)
+                // Use an if/else branch so only one field exists in the view hierarchy
+                // at a time. An opacity-zero view stays in the responder chain and can
+                // surface the password in the QuickType/predictive-text suggestions bar.
+                if isVisible {
+                    // Plain (revealed) field
+                    TextField(placeholder, text: $text)
+                } else {
+                    // Secure (masked) field
+                    SecureField(placeholder, text: $text)
+                }
             }
             .autocorrectionDisabled()
             .textInputAutocapitalization(.never)
